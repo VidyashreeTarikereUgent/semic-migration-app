@@ -4,11 +4,13 @@ import { QueryStringContext } from '@comunica/types'
 import { ActorHttpInruptSolidClientAuthn } from '@comunica/actor-http-inrupt-solid-client-authn'
 import { CitizenInfo } from './model';
 
-
-function TableOfContents({ country, location, fromDate, toDate, session, userNationality }): any {
+function TableOfContents({ chosenLocation, country, location, fromDate, toDate, session, userNationality }): any {
     const [tableOfContents, setTableOfContents] = useState([]);
+    const citizenData: CitizenInfo[] = []
+    const [citizenArray, setCitizenArray] = useState<CitizenInfo[]>([])
 
     const fetchData = async (): Promise<void> => {
+        console.log("hello")
         // Fetch table of contents data for the selected country
         const myEngine = new QueryEngine
         const context: QueryStringContext = {
@@ -17,29 +19,90 @@ function TableOfContents({ country, location, fromDate, toDate, session, userNat
             baseIRI: location,
             [ActorHttpInruptSolidClientAuthn.CONTEXT_KEY_SESSION.name]: session
         }
-        const bindingsStream = await myEngine.queryBindings(
-            `SELECT ?id ?name ?nationality ?registeredDate WHERE {
-            ?id <http://semic-example.com/title> ?name ;
-                <http://semic-example.com/nationality> ?nationality ;
-                <http://semic-example.com/registeredDate> ?registeredDate .
-            FILTER (str(?nationality) != "${userNationality}") 
-            FILTER (?registeredDate < ${fromDate})
-            FILTER (?registeredDate > ${toDate})
+
+        //if an officer of a particular country is trying to access his own countries data:
+        if (chosenLocation === userNationality) {
+            console.log("access everything in resident country") //filter with user nationality with resCountry
+            const bindingsStream = await myEngine.queryBindings(
+                `SELECT ?id ?name ?nat ?resCity ?resCountry ?registeration ?time WHERE {
+                    ?id <http://example.com/ns#name> ?name ;
+                <http://example.com/ns#nat> ?nat ;
+                <http://example.com/ns#resCity> ?resCity ;
+                <http://example.com/ns#resCountry> ?resCountry ;
+                <http://example.com/ns#time> ?time ;
+                <http://example.com/ns#registeration> ?registeration .
+                FILTER (str(?resCountry) = "${userNationality}") 
+                FILTER (?time >= "${fromDate}")
+                FILTER (?time <= "${toDate}")
+                
+        }`, context)
+
+
+            const bindings = await bindingsStream.toArray()
+            // console.log(bindings)
+            //display the number of citizens present
+            // const numberOfCitizens = bindings.length
+            bindings.forEach((element) => {
+
+                //No need to display the information of the citizens
+                const citizenId: any = element.get('id')!.value
+                const citizenName = element.get('name')!.value
+                const citizenNationality = element.get('nat')!.value
+                const citizenRegisteredCity = element.get('resCity')!.value
+                const citizenRegisteredCountry = element.get('resCountry')!.value
+                const citizenRegisteration = element.get('registeration')!.value
+                const citizenTime = element.get('time')!.value
+                const person: CitizenInfo = { citizenId, citizenName, citizenNationality, citizenRegisteredCity, citizenRegisteredCountry, citizenRegisteration, citizenTime }
+                // console.log(person)
+                citizenData.push(person)
+                setCitizenArray([...citizenArray, ...citizenData])
+            })
+            console.log(citizenData)
         }
-        ORDER BY ASC(?registeredDate)
-        LIMIT 100`, context
-        )
-        const citizenData = {}
-        const bindings = await bindingsStream.toArray()
-        bindings.forEach((element) => {
-            const citizenId: any = element.get('id')!.value
-            const citizenName = element.get('name')!.value
-            const citizenNationality = element.get('nationality')!.value
-            const citizenRegisteredDate = element.get('registeredDate')!.value
-            const person: CitizenInfo = { citizenId, citizenName, citizenNationality, citizenRegisteredDate }
-            citizenData[citizenId] = person
-        })
+
+        //if an officer of a particular country is trying to access data from other countries:
+        if (chosenLocation != userNationality) {
+            console.log("access Nat of usernationality in selected country") //filter with usernationality and nat and also res country. Also filter with from and to date.
+            const bindingsStream = await myEngine.queryBindings(
+                `SELECT ?id ?name ?nat ?resCity ?resCountry ?registeration ?time WHERE {
+                    ?id <http://example.com/ns#name> ?name ;
+                <http://example.com/ns#nat> ?nat ;
+                <http://example.com/ns#resCity> ?resCity ;
+                <http://example.com/ns#resCountry> ?resCountry ;
+                <http://example.com/ns#time> ?time ;
+                <http://example.com/ns#registeration> ?registeration .
+            FILTER (str(?resCountry) = "${chosenLocation}")
+            FILTER (str(?nat) = "${userNationality}") 
+            FILTER (?time >= "${fromDate}")
+            FILTER (?time <= "${toDate}")
+           
+           
+        }`, context)
+
+
+            const bindings = await bindingsStream.toArray()
+            //display the number of citizens present
+            // const numberOfCitizens = bindings.length
+            bindings.forEach((element) => {
+
+                //No need to display the information of the citizens
+                const citizenId: any = element.get('id')!.value
+                const citizenName = element.get('name')!.value
+                const citizenNationality = element.get('nat')!.value
+                const citizenRegisteredCity = element.get('resCity')!.value
+                const citizenRegisteredCountry = element.get('resCountry')!.value
+                const citizenRegisteration = element.get('registeration')!.value
+                const citizenTime = element.get('time')!.value
+                console.log(citizenTime)
+                const person: CitizenInfo = { citizenId, citizenName, citizenNationality, citizenRegisteredCity, citizenRegisteredCountry, citizenRegisteration, citizenTime }
+                // console.log(person)
+                citizenData.push(person)
+                setCitizenArray([...citizenArray, ...citizenData])
+            })
+            console.log(citizenData)
+        }
     }
+
 
     useEffect(() => {
         void fetchData()
@@ -47,25 +110,66 @@ function TableOfContents({ country, location, fromDate, toDate, session, userNat
 
 
 
-    return (
-        <div>
+    if (chosenLocation === userNationality) {
+        return (
+            <div>
+                <br /><br />
+                <h2>Number of citizen entries present : {citizenArray.length}</h2>
+                <h2>Table of Contents for {country}:</h2> <br />
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Citizen Name</th>
+                            <th>Citizen Nationality</th>
+                            <th>Resident City</th>
+                            <th>Citizen Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {citizenArray.map((entry) => {
+                            return (
+                                <><tr key={entry.citizenId}>
+                                    <td>{entry.citizenName}</td>
+                                    <td>{entry.citizenNationality}</td>
+                                    <td>{entry.citizenRegisteredCity}</td>
+                                    <td>{entry.citizenRegisteration} on {entry.citizenTime}</td>
+                                </tr></>
+                            )
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        )
+    } else {
+        return (
+            <div>
+                <br /><br />
+                <h2>Number of citizen entries present : {citizenArray.length}</h2>
+                <h2>Table of Contents for {country}:</h2> <br />
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Citizen Nationality</th>
+                            <th>Resident City</th>
+                            <th>Citizen Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {citizenArray.map((entry) => {
+                            return (
+                                <><tr key={entry.citizenId}>
+                                    <td>{entry.citizenNationality}</td>
+                                    <td>{entry.citizenRegisteredCity}</td>
+                                    <td>{entry.citizenRegisteration} on {entry.citizenTime}</td>
+                                </tr></>
+                            )
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        )
+    }
 
-            <h2>Table of Contents for {country}</h2> <br />
-            <table>
-                <thead>
-                    <tr>
-                        <th>Citizen Name</th>
-                        <th>Citizen ID</th>
-                        <th>Citizen Registered Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {/* map the citizenData array here for table body */}
-
-                </tbody>
-            </table>
-        </div>
-    )
 }
 
 export default TableOfContents;

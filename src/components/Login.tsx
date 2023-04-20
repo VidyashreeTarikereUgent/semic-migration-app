@@ -2,15 +2,17 @@ import { useEffect, useState } from 'react'
 import { LoginButton, LogoutButton, useSession, CombinedDataProvider } from '@inrupt/solid-ui-react'
 import { QueryEngine } from '@comunica/query-sparql'
 import CountrySelector from './CountrySelector'
+import "./style.css"
 
 const authOptions = {
-  clientName: 'Semic Migration'
+  clientName: 'Semic EU Migration'
 }
 
 const Login: React.FC = (): JSX.Element => {
   const { session } = useSession()
   const [oidcIssuer, setOidcIssuer] = useState('')
   const [userName, setUserName] = useState('')
+
 
   // To get the oidcIssuer for the user webId input
   async function validate(event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
@@ -49,41 +51,41 @@ const Login: React.FC = (): JSX.Element => {
     return userName
   }
 
+
+
   const webID = session.info.webId ?? oidcIssuer
+  console.log(webID)
   if (session.info.isLoggedIn) {
     void getName(webID)
     return (
-      <div>
-        <CombinedDataProvider
-          datasetUrl={webID}
-          thingUrl={webID}
-        >
+      <div className='text-xl'>
+        <div className='flex justify-between  '>
           <div>
-            <div className='flex flex-row'>
-              <p className='mr-4'>You are logged in as: {userName} </p>
-              <br />
-            </div>
+            <p>{userName} </p>
 
+            <br />
+          </div>
+          <div>
             <LogoutButton
               onError={function noRefCheck() { }}
               onLogout={function noRefCheck() { }}
             />
-            <br />
           </div>
-          <div>
-            <CountrySelector session={session} webID={webID} />
-          </div>
-        </CombinedDataProvider>
+          <br />
+        </div>
+        <div>
+          <CountrySelector session={session} webID={webID} />
+        </div>
       </div>
     )
   } else {
     return (
       <div>
-        <div className="grid grid-cols-3 gap-2">
-          <p className='col-span-3'>You are not logged in.</p>
-          <p className='col-span-3'>Login with webID:</p>
+        <div className="flex">
+          <p>You are not logged in.</p>
+          <p>Login with webID:</p>
           <input
-            className="oidc-issuer-input col-span-2"
+            className="oidc-issuer-input"
             type="text"
             name="oidcIssuer"
             placeholder="webID"

@@ -14,22 +14,23 @@ body {
   margin: 0;
   padding: 0;
   height: 100%;
+  color: black;
 }
 
 button {
-  border: 1px solid white;
+  border: 1px solid rgb(73, 126, 134);
   padding: 0.2rem 0.4rem;
   transition: all 0.3s ease;
   margin-left: auto;
 }
 
 button:hover {
-  background-color: white;
-  color: white;
+  background-color: rgb(73, 126, 134);
+  color: rgb(73, 126, 134);
 }
 
 table,
 th,
 td {
-  border: 1px solid black;
+  border: 1px solid rgb(73, 126, 134);
 }

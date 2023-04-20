@@ -1,56 +1,62 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import TableOfContents from './TableOfContents';
 
 function ContentSelector(session, webID) {
-    const [selectedCountry, setSelectedCountry] = useState('');
-    const [fromDate, setFromDate] = useState(null);
-    const [toDate, setToDate] = useState(null);
+    const [selectedCountry, setSelectedCountry] = useState<string>('');
+    const [fromDate, setFromDate] = useState('');
+    const [toDate, setToDate] = useState('');
     const [sourceLocation, setSourceLocation] = useState<string>('')
     const [userNationality, setUserNationality] = useState<string>('')
+    const [chosenLocation, setChosenLocation] = useState<string>('')
+    const countryID = session.webID
 
-
-    const handleNationality = (webID) => {
+    // setUserNationality("BE")
+    const handleNationality = (countryID) => {
         // WebIds of French, Belgian, Greek nationalities
-        const frenchWebId = ''
-        const belgianWebId = ''
-        const greekWebId = ''
+        // console.log(webID)
+        const frenchWebId = 'https://frenchpod.solidcommunity.net/profile/card#me'
+        const belgianWebId = 'https://belgianpod.solidcommunity.net/profile/card#me'
+        const greekWebId = 'https://greekpod.solidcommunity.net/profile/card#me'
 
-        if (webID === frenchWebId) {
-            setUserNationality('French')
-        } else if (webID === belgianWebId) {
-            setUserNationality('Belgian')
-        } else {
-            setUserNationality('Greek')
+        // console.log(userNationality)
+        if (countryID === frenchWebId) {
+            setUserNationality('FR')
+        }
+        if (countryID === belgianWebId) {
+            setUserNationality('BE')
+        }
+        if (countryID === greekWebId) {
+            setUserNationality('GR')
         }
     }
 
-    const handleSelectCountry = (event) => {
-        setSelectedCountry(event.target.value);
+    const handleSelectCountry = (selectedCountry) => {
+        // console.log(selectedCountry)
         if (selectedCountry === 'Belgium') {
-            setSourceLocation('') //address of Belgium dataspace
+            setSourceLocation('http://localhost:3000/ldes/default/')
+            setChosenLocation("BE")
+            //address of Belgium dataspace
         }
         else if (selectedCountry === 'France') {
-            setSourceLocation('') //address of France dataspace
+            setSourceLocation('http://localhost:3000/ldes/default/') //address of France dataspace
+            setChosenLocation("FR")
         }
         else {
-            setSourceLocation('') //address of Greece dataspace
+            setSourceLocation('http://localhost:3000/ldes/default/') //address of Greece dataspace
+            setChosenLocation("GR")
+            // console.log("hi in else")
         }
-        handleNationality(webID)
-    };
+        handleNationality(countryID)
+    }
 
-
-    const handleFromDateChange = (date) => {
-        setFromDate(date);
-    };
-
-    const handleToDateChange = (date) => {
-        setToDate(date);
-    };
+    useEffect(() => {
+        handleSelectCountry(selectedCountry)
+    })
 
     return (
         <div>
-            <label htmlFor="country-selector">Select a country:</label>
-            <select id="country-selector" value={selectedCountry} onChange={handleSelectCountry}>
+            <label htmlFor="country-selector" >Select a country:</label>
+            <select id="country-selector" value={selectedCountry} onChange={e => setSelectedCountry(e.target.value)}>
                 <option value="">--Please choose an option--</option>
                 <option value="Belgium">Belgium</option>
                 <option value="France">France</option>
@@ -58,14 +64,13 @@ function ContentSelector(session, webID) {
             </select>
             <br />
             <br />
-            <label htmlFor="from-date-picker">From date:</label>
-            <input type="date" id="from-date-picker" value={fromDate as any} onChange={(event) => handleFromDateChange(event.target.value)} />
-
-            <label htmlFor="to-date-picker">To date:</label>
-            <input type="date" id="to-date-picker" value={toDate as any} onChange={(event) => handleToDateChange(event.target.value)} />
+            <h1>Selected date : {toDate} {fromDate}</h1>
+            <input type="datetime-local" onChange={e => setFromDate(e.target.value) as any as string} />
+            &nbsp;
+            <input type="datetime-local" onChange={e => setToDate(e.target.value) as any as string} />
 
             {selectedCountry && fromDate && toDate && (
-                <TableOfContents country={selectedCountry} location={sourceLocation} fromDate={fromDate} toDate={toDate} session={session} userNationality={userNationality} />
+                <TableOfContents chosenLocation={chosenLocation} country={selectedCountry} location={sourceLocation} fromDate={fromDate} toDate={toDate} session={session} userNationality={userNationality} />
             )}
         </div>
     );

@@ -2,7 +2,10 @@ interface CitizenInfo {
     citizenId: number
     citizenName: string
     citizenNationality: string
-    citizenRegisteredDate: string
+    citizenRegisteredCity: string
+    citizenRegisteredCountry: string
+    citizenRegisteration: string
+    citizenTime: string
 }
 
 export { type CitizenInfo }
